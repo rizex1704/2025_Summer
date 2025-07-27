@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>게시판</title>
+</head>
+<body>
+  <h1>게시판</h1>
+  <div id="posts"></div>
+
+  <script>
+    let currentUserId = null;
+
+    // 로그인한 사용자 정보를 가져오기
+    fetch('/session', {
+      credentials: 'include'
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.user_id) {
+          currentUserId = data.user_id;
+          console.log('현재 로그인된 사용자:', currentUserId);
+        } else {
+          console.log('로그인되지 않음');
+        }
+
+        // 게시글 목록 가져오기
+        return fetch('/api/posts', {
+          credentials: 'include'
+        });
+      })
+      .then(res => res.json())
+      .then(posts => {
+        const postsDiv = document.getElementById('posts');
+        posts.forEach(post => {
+          const postElement = document.createElement('div');
+          postElement.innerHTML = `
+            <h3>${post.title}</h3>
+            <p>${post.content}</p>
+            <p>작성자: ${post.writer}</p>
+            <p>작성일: ${new Date(post.created_at).toLocaleString()}</p>
+          `;
+
+          // 로그인한 사용자가 게시글 작성자일 경우 수정/삭제 버튼 표시
+          if (post.writer === currentUserId) {
+            const editBtn = document.createElement('button');
+            editBtn.innerText = '수정';
+            // 여기에 수정 기능 연결 가능
+            postElement.appendChild(editBtn);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.innerText = '삭제';
+            // 여기에 삭제 기능 연결 가능
+            postElement.appendChild(deleteBtn);
+          }
+
+          postElement.appendChild(document.createElement('hr'));
+          postsDiv.appendChild(postElement);
+        });
+      })
+      .catch(err => {
+        console.error('에러 발생:', err);
+        const postsDiv = document.getElementById('posts');
+        postsDiv.innerText = '게시글을 불러오는 중 오류가 발생했습니다.';
+      });
+  </script>
+</body>
+</html>
